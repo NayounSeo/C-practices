@@ -1,0 +1,5 @@
+Enrolled number : 3
+
+Tom	20130001	Computers	
+Jenny	20130002	Electronics	
+Bob	20130005	Math	
