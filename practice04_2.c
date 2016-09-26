@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+/* 사실 수정해야 함 ㅎㅅㅎ TODO*/
 typedef enum { false, true } bool;
 
 typedef struct {

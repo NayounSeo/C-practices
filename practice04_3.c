@@ -1,7 +1,6 @@
-// 실행은 아직 안시켜봄
 #include <stdio.h>
 #include <stdlib.h>
-
+/* 사실 수정해야 함 ㅎㅅㅎ 실행도 안시켜봄.. TODO*/
 #define MAX_QUEUE_SIZE 8
 typedef struct _queueType* Queue;
 
