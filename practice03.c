@@ -12,6 +12,7 @@ typedef struct {
     studentT* students[MAX_ENROLL];
     int numEnrolled;
 } courseT;
+
 /* 파일에서 교과 수강생 정보 읽기 */
 void GetClassData(courseT* course);
 /* 파일에 교과 수강생 정보 쓰기 */

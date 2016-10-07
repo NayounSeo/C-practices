@@ -1,3 +1,4 @@
+/* AVL Tree */
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -71,7 +72,6 @@ int get_height(tree* node) {
 }
 
 void insert_node(tree* node, int value){
-     // puts("start insert_node===================");
     /* 이진트리의 기본 삽입 뼈대 */
     if (node == NULL) {  //트리 최초 삽입
         tree* newNode = (tree*)malloc(sizeof(tree));
@@ -79,7 +79,6 @@ void insert_node(tree* node, int value){
         newNode->left = NULL;
         newNode->right = NULL;
         avl = newNode;
-    // puts("===================end insert_node");
         return;
     }
 
@@ -109,7 +108,6 @@ void insert_node(tree* node, int value){
     }
 
     traverse_tree(avl, NULL, 0);
-    // puts("===================end insert_node");
     return;
 }
 
@@ -155,7 +153,6 @@ void traverse_tree(tree* node, tree* parent, int direction) {
             }
         }
     }
-    // puts("0");
     return;
 
 }
