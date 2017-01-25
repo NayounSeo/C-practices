@@ -2,6 +2,8 @@
  * Introdunction to Algorithms : 3rd Edition 에서 참고
  * index > SIZE / 2 면 리프노드라는 사실은 루프 수를 줄이는데 도움을 줍니다. ! ☆
  * 혼자서 짰을 때의 예상 결과물보다 훨씬 좋은 코드..!
+ *
+ * 시간 복잡도 O(n * log(n))
  */
 #include <stdio.h>
 #include <stdlib.h>
