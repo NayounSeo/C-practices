@@ -39,6 +39,8 @@ int main() {
     find(n3);
     find(n5);
 
+    print_table();
+
     return 0;
 }
 

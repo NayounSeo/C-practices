@@ -51,35 +51,34 @@ int main(void) {
     return 0;
 }
 
-// 변수 이름은 전역변수랑 똑같이 만들지 말자 ㅂㄷㅂㄷ..
 void insertTreeNode(BT* bt1, int value) {
-    if (bt1 == NULL) {
-        BT* newNode = (BT*)malloc(sizeof(BT));
-        newNode->value = value;
-		newNode->left = NULL;
-		newNode->right = NULL;
-		bt = newNode;
-        return;
+    if (bt1 == NULL) {  // 트리가 비어 있다면
+      BT* newNode = (BT*) malloc (sizeof (BT));
+      newNode->value = value;
+      newNode->left = NULL;
+      newNode->right = NULL;
+      bt = newNode;
+      return;
     }
-    if (value >= bt1->value) {
-        if (bt1->right == NULL) {
-            BT* newNode = (BT*) malloc(sizeof(BT));
-            newNode->value = value;
-			newNode->left = NULL;
-			newNode->right = NULL;
-            bt1->right = newNode;
+    if (value >= bt1->value) { // 트리의 루트보다 값이 크다면 오른쪽으로
+        if (bt1->right == NULL) { // 루트의 오른쪽이 비었다면 바로 삽입
+          BT* newNode = (BT*) malloc(sizeof(BT));
+          newNode->value = value;
+          newNode->left = NULL;
+          newNode->right = NULL;
+          bt1->right = newNode;
         } else {
-            insertTreeNode(bt1->right, value);
+          insertTreeNode(bt1->right, value); // 오른쪽이 있다면 재귀적으로 삽입 실행
         }
-    } else {
-        if (bt1->left == NULL) {
-            BT* newNode = (BT*) malloc(sizeof(BT));
-            newNode->value = value;
-			newNode->left = NULL;
-			newNode->right = NULL;
-            bt1->left = newNode;
+    } else { // 트리의 루트보다 값이 작다면 왼쪽으로
+        if (bt1->left == NULL) { // 왼쪽 자식이 비었다면
+          BT* newNode = (BT*) malloc(sizeof(BT));
+          newNode->value = value;
+          newNode->left = NULL;
+          newNode->right = NULL;
+          bt1->left = newNode;
         } else {
-            insertTreeNode(bt1->left, value);
+            insertTreeNode(bt1->left, value); // 왼쪽 자식이 있다면
         }
     }
 }
@@ -111,7 +110,7 @@ void printIn(BT* bt) {
         printIn(bt->left);
         printf("%d\t", bt->value);
         printIn(bt->right);
-	}
+  }
 }
 
 void printPost(BT* bt) {
@@ -119,5 +118,5 @@ void printPost(BT* bt) {
         printPost(bt->left);
         printPost(bt->right);
         printf("%d\t", bt->value);
-	}
+  }
 }

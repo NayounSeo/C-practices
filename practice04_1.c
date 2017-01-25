@@ -6,6 +6,7 @@ struct Node {
     struct Node* prev;
     struct Node* next;
 };
+
 typedef struct Node* PtrtoNode;
 
 typedef struct list {
