@@ -23,7 +23,7 @@ void check_heap (heap *h, int parent);
 int main() {
   // 초기 선언
   int a[SIZE] = {10, 3, 11, 8, 17, 2, 5, 14, 6, 19, 
-                   0, 7, 4, 9, 1, 18, 12, 16, 15, 13};
+                  0, 7, 4, 9, 1, 18, 12, 16, 15, 13};
   int i = 0;
   heap *h = (heap *) malloc (sizeof (heap));
   h->size = 20;
