@@ -1,11 +1,3 @@
-/*
- * 2017. 02. 07.
- * Introduction to Algorithms 참고 (수정 있음)
- * 드디어 BFS 너비 우선 검색!
- * 큐에서 삽입, 삭제 : O(1) * V = O(V)
- * 한 간선을 최대 한번 스캔 : O(E)
- * O(V + E)
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -16,6 +8,7 @@ struct graph {
   struct list_node **graph;
   int vertices;
   int edges;
+  int time;  // DFS에 쓰일 속성
 };
 
 struct list_node { // 리스트 노드
@@ -26,22 +19,23 @@ struct list_node { // 리스트 노드
 struct queue {
   struct queue_node *front;
   struct queue_node *rear;
-  int length;
 };
 
 struct queue_node {
-  int value;
-  char wgb; // white, grey. black 중 하나의 값을 가짐
-  int distance; // 시작점으로부터의 거리
-  struct queue_node *prev; // 직전 꼭지점 - 이게 왜 prev인가 했더니... 아구구구 이유가 있는 거였어 
-  struct queue_node *next; // 편의상 추가
+  int value;; // white, grey. black 중 하나의 값을 가짐
+  char wgb; // white or grey or black
+  int start; // 검색된 시점
+  int end; // 검색이 끝난 시점
+  struct queue_node *prev;
+  struct queue_node *next;
 };
 
 struct graph *matrix_to_list (int **matrix, int vertices);
 void insert_list_node (struct list_node **graph, struct list_node *new_node, int vertex);
 
-struct queue *breadth_first_search (struct graph *g, int start);
-void bfs_queueing (struct graph *g, struct queue * que, struct queue_node **vertexes, struct queue *result);
+struct queue_node **depth_first_search (struct graph *g, struct queue_node **vertexes);
+void dfs_visit (struct graph *g, struct queue_node **vertexes, int index);
+
 void enqueue (struct queue *q, struct queue_node *node);
 struct queue_node *dequeue (struct queue *q);
 struct queue_node *traverse_queue_node (struct queue *q, int value);
@@ -63,15 +57,19 @@ int main() {
   // 리스트로 표현된 그래프 반환
   struct graph *g = matrix_to_list (matrix, V);
 
-  // BFS
-  int start = 2;
-  struct queue *result = breadth_first_search (g, start);
-  struct queue_node *head = result->front;
+  struct queue_node *vertexes[V];
+  struct queue_node **result = depth_first_search (g, vertexes);
 
-  // 결과 출력
-  while (head != NULL) {
-    printf("\tval : %d\twgb: %c\tdistance : %d\n", head->value, head->wgb, head->distance);
-    head = head->next;
+  for (i = 0; i < V; i++) {
+    struct queue_node *node = result[i];
+    // printf("꼭지점 value : %d\twgb : %c\tstart : %d\tend : %d\t prev : %d\n",
+    printf("꼭지점 value : %d\twgb : %c\tstart : %d\tend : %d\t",
+      node->value, node->wgb, node->start, node->end);
+    if (node->prev != NULL) {
+      printf("prev : %d\n", node->prev->value);
+    } else {
+      printf("\n");
+    }
   }
 
   return 0;
@@ -98,6 +96,7 @@ struct graph *matrix_to_list (int **matrix, int vertices) {
   g->graph = adj_list;
   g->vertices = vertices;
   g->edges = edges;
+  g->time = 0;
 
   return g;
 }
@@ -110,77 +109,43 @@ void insert_list_node (struct list_node **graph, struct list_node *new_node, int
 }
 
 // BFS에 관련된 함수들
-struct queue *breadth_first_search (struct graph *g, int start) {
-  struct queue_node *vertexes[V];
+struct queue_node **depth_first_search (struct graph *g, struct queue_node **vertexes) {
+  // struct queue_node *vertexes[V];
   int i;
-
-  for (i = V; i > 0; i--) {
-    struct queue_node *q = (struct queue_node *) malloc (sizeof (struct queue_node));
-    q->value = i - 1;
-    q->wgb = 'w';
-    q->distance = 999;
-    q->prev = NULL;
-    q->next = NULL;
-    vertexes[i - 1] = q;
+  for (i = 0; i < V; i++) {
+    struct queue_node *node = (struct queue_node *) malloc (sizeof (struct queue_node));
+    node->value = i;
+    node->wgb = 'w';
+    vertexes[i] = node;
   }
 
-  struct queue_node *s = vertexes[start]; // 사용자가 지정한 꼭지점
-  s->wgb = 'g';
-  s->distance = 0;
-  s->next = NULL;
-
-  struct queue *que = (struct queue *) malloc (sizeof (struct queue));
-  que->front = NULL;
-  que->rear = NULL;
-  // que->length = 0;
-  enqueue (que, s);
-
-  struct queue *result = (struct queue *) malloc (sizeof (struct queue));
-  result->front = NULL;
-  result->rear = NULL;
-
-  bfs_queueing (g, que, vertexes, result);
-
-  // ☆ TODO 방향 그래프에서ㅜㅠ outer degree는 있지만 inner degree가 없는 정점들을 위해
   for (i = 0; i < V; i++) {
     if (vertexes[i]->wgb == 'w') {
-      struct queue_node *ss = vertexes[i];
-      ss->wgb = 'g';
-      // 거리는 초기화 안함
-      ss->next = NULL;
-      enqueue (que, ss);
-      bfs_queueing (g, que, vertexes, result);
+      dfs_visit (g, vertexes, i);
     }
   }
-
-  return result;
+  return vertexes;
 }
 
-void bfs_queueing (struct graph *g, struct queue * que, struct queue_node **vertexes, struct queue *result) {
-  while (que->front != NULL) {
-    struct queue_node *u = dequeue (que);
-    enqueue (result, u);
 
-    /* 
-     * 인접 리스트 표현을 통해 간선이 있는 정점을 찾는다.
-     * 간선 끝의 정점이 흰색이라면
-     *    회색 / 거리 / prev + 내 경우에는 next까지
-     */
-    struct list_node *cur = g->graph[u->value];
-    while (cur != NULL) {
-      int vertex = cur->vertex;
-      struct queue_node *node = vertexes[vertex];
+void dfs_visit (struct graph *g, struct queue_node **vertexes, int index) {
+  struct queue_node *node = vertexes[index];
+  g->time += 1;
+  node->start = g->time;
+  node->wgb = 'g';
 
-      if (node->wgb == 'w') {
-        node->wgb = 'g';
-        node->distance = u->distance + 1;
-        node->prev = u;
-        enqueue (que, vertexes[vertex]);
-      }
-      cur = cur->next;
+  struct list_node *cur = g->graph[node->value];  // index 정점과 연결된 다르 정점
+  while (cur != NULL) {
+    int vertex = cur->vertex;
+    if (vertexes[vertex]->wgb == 'w') {
+      vertexes[vertex]->prev = node;
+      dfs_visit (g, vertexes, vertex);
     }
-    u->wgb = 'b';
+    cur = cur->next;
   }
+  node->wgb = 'b';
+  g->time += 1;
+  node->end = g->time;
 }
 
 void enqueue (struct queue *q, struct queue_node *node) { // 큐의 끝에만 삽입
@@ -193,7 +158,6 @@ void enqueue (struct queue *q, struct queue_node *node) { // 큐의 끝에만 �
     q->front = node;
   }
   q->rear = node;
-  // q.length += 1;
 }
 
 struct queue_node *dequeue (struct queue *q) {
