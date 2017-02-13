@@ -2,6 +2,7 @@
  * 2017. 02. 07.
  * Introduction to Algorithms 참고 (수정 있음)
  * 드디어 BFS 너비 우선 검색!
+ * 초기화 : O(V)
  * 큐에서 삽입, 삭제 : O(1) * V = O(V)
  * 한 간선을 최대 한번 스캔 : O(E)
  * O(V + E)
