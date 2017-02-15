@@ -6,6 +6,8 @@
  *
  * 인접 리스트인 경우
  * 일부 코드는 graph_adj_transform.c 에서
+ *
+ * 수행시간 O(V + E)
  */
 
 #include <stdio.h>
