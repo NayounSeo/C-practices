@@ -262,7 +262,7 @@ struct scc_tree *depth_first_search_on_T (struct graph *gT, struct dfs_node **tp
 
 struct dfs_node *dfs_visit_on_T (struct graph *gT, struct dfs_node **tpl_sorted, int index) {
   printf("\t\tdfs_visit_on_T의 value : %d\n", tpl_sorted[index]->value);
-  struct dfs_node *prev_forest;
+  struct dfs_node *prev_forest = NULL;
   struct dfs_node *node = tpl_sorted[index];
   int i;
   gT->time += 1;
@@ -291,9 +291,9 @@ struct dfs_node *dfs_visit_on_T (struct graph *gT, struct dfs_node **tpl_sorted,
   // 연결 성분 포레스트
   node->next = prev_forest;
   struct dfs_node *new_forest = node;
-  // printf("\tforest_root_value %d\n", new_forest->value);
-  // if (node->next != NULL) {
-  //   printf("\t\t%d\n", node->next->value);
-  // }
+  printf("\tforest_root_value %d\n", new_forest->value);
+  if (node->next != NULL) {
+    printf("\t\t%d\n", node->next->value);
+  }
   return new_forest;
 }
