@@ -1,10 +1,11 @@
 /*
  * 2017. 03. 28. minimum spanning tree - prim
- * 프림 알고리즘대로면 사이클이 안생긴다
+ * 프림에서는 사이클이 생기지 않습니다.
  * 
- * 귀찮으니 그냥 행렬로 풀겠다
- * 큐를 이용합니다
- * 우선순위 큐 왜 쓰지ㅜㅠㅜ 산으로 가는 코드...
+ * 2017. 04. 04. 새로 시작 ㅜㅠ
+ * min heap 우선 순위 큐를 이용한 Prim Algorithm이 있지만
+ * 수업시간에 쓴 별도의 pop이 필요하지 않은 방식으로.. (-1 표기)
+ * Q : 그런데 이 방식은 행렬이랑 더 잘 맞나? 아닐텐데
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,19 +20,6 @@ struct graph {
   int e;
 };
 
-// for queue prim - v_node
-struct queue {
-  struct v_node *front;
-  struct v_node *rear;
-};
-
-struct v_node {
-  int vertex;
-  // int key;
-  struct v_node *pre; //
-  struct v_node *next; //
-};
-
 struct e_node {
   int from; // starting pt
   int to; // end pt
@@ -40,15 +28,10 @@ struct e_node {
   struct e_node *next;
 };
 
-struct e_node **prim_search (struct graph *g, int start);
-struct queue *init_queue ();
-void enqueue (struct queue *q, int vertex);
-void temp_enqueue (struct queue *q, int vertex);
-struct v_node *dequeue (struct queue *q);
-struct v_node *temp_dequeue (struct queue *q, int vertex);
-int search_que_value (struct queue *que, int vertex);
+struct e_node *prim_search (int **matrix, int v, int start);
 struct graph *matrix_to_list (int **matrix, int vertices);
-void insert_list_node (struct e_node **graph, struct e_node *new_node, int vertex);
+void insert_list_node (struct e_node **graph, struct e_node *new_node, 
+                       int vertex);
 
 int main() {
   int graph_matrix[V][V] = {{0, 45, 220, 79, 0, 0, 0, 0, 0}, // A
@@ -68,166 +51,72 @@ int main() {
     memcpy (matrix[i], graph_matrix[i], sizeof (int) * V);
   }
   // 인접 리스트로 표현된 그래프 
-  struct graph *g = matrix_to_list (matrix, V);
+  // struct graph *g = matrix_to_list (matrix, V);
 
-  struct e_node **prim_edge = prim_search (g, 0);
-  /*
-  int sum = 0;
+  int start = 0;
+  struct e_node *prim_edges = prim_search (matrix, V, start);
+  
   for (i = 0; i < V - 1; i++) {
-    printf ("edge from : %d to : %d weight : %d\n", prim_edge[i]->from, prim_edge[i]->to, prim_edge[i]->weight);
-    sum += prim_edge[i]->weight;
+    printf ("from : %d to : %d weight : %d\n", prim_edges[i].from, prim_edges[i].to, prim_edges[i].weight);
   }
-  printf ("total weight : %d\n", sum);
-  */
+
+
   return 0;
 }
-
 /*
- * graph : graph matrix
- * v : number of v
- * start : start index
+ * matrix : 인접리스트로 이걸 풀면 더 뺑이 돌 것 같아서.. 행렬
+ * v : 정점의 수
+ * start : 시작점
  */
-struct e_node **prim_search (struct graph *g, int start) {
-  struct queue *origin_que = init_queue (); // 모든 정점들을 추가할 큐
-  struct queue *prim_que = init_queue (); // 찾은 정점들을 추가할 큐
-  // 찾은 간선들을 저장할 배열
-  struct e_node **prim_edge = (struct e_node **) malloc (
-                                      sizeof (struct e_node *) * (g->v - 1));
-  int i;
-  // 초기화
-  for (i = 0; i < g->v; i++) { // 초기 정점들을 큐에 추가 (시작점 제외)
-    if (i != start) {
-      temp_enqueue (origin_que, i);
-      // enqueue (origin_que, i);
+struct e_node *prim_search (int **matrix, int v, int start) {
+  // 가장 가까운 노선의 이전 정점 - near와 dist는 한세트
+  int *near_pre_v = (int *) malloc (sizeof (int) * v);
+  // 프림 정점으로부터의 거리
+  int *dist_prim = (int *) malloc (sizeof (int) * v);
+  memset (dist_prim, 0, sizeof(int) * v);
+
+  struct e_node *prim_edges = (struct e_node *) malloc (sizeof (struct e_node) * (v - 1));
+  int i, j;
+
+  for (i = 0; i < v; i++) {
+    near_pre_v[i] = start;
+    dist_prim[i] = matrix[start][i];
+    if (matrix[start][i] == 0) {
+      dist_prim[i] = 9999;
     }
   }
-  temp_enqueue (prim_que, start); // 시작점 추가
-  // enqueue (prim_que, start) // 시작점 추가
+  dist_prim[start] = -1;
 
-  // 탐색 - 노드 성질에 주의ㅜㅠ
-  struct v_node *from_A;
-  struct e_node *to_B;
-  struct e_node *min_e = (struct e_node *) malloc (sizeof (struct e_node));
-  i = 0;
+  int min_dist;
+  int vnear = start; // 프림에 추가될 정점
+  for (i = 0; i < v - 1; i++) { // 추가할 간선이 최종 n - 1 개 니까
+    min_dist = 9999;
 
-  /*
-   * 우선 해당 정점의 인접리스트를 돈다.
-   *   해당 정점이 프림에 추가되어 있는지 체크한다. 혹은 큐에 있는지
-   *     아직 없다면 최소 간선을 확인한다. 
-   */
-  while (origin_que->front != NULL) {
-    min_e->weight = 9999;
-    from_A = prim_que->front;
-    while (from_A != NULL) { // 이미 추가된 정점들에 대해
-      to_B = g->graph[from_A->vertex];
-      while (to_B != NULL) { // A 정점에 연결된 간선에 대하여 
-        // 간선이 min 값보다 작고 이미 추가된 prim 간선이 아니라면
-        if (to_B->weight < min_e->weight && to_B->add_prim != 1) {
-          printf("min_e weight %d to_B weigth %d\n", min_e->weight, to_B->weight);
-          min_e = to_B;
-        }
-        to_B = to_B->next;
+    for (j = 0; j < v; j++) {
+      if (j != start && dist_prim[j] < min_dist && dist_prim[j] > 0) {
+        min_dist = dist_prim[j];
+        vnear = j;
       }
-      from_A = from_A->next;
     }
 
-    // TODO : 확인된 최소 프림 간선을 추가할 부분, 정점을 추가해야하는 부분
-    prim_edge[i] = (struct e_node *) malloc (sizeof (struct e_node));
-    prim_edge[i] = min_e;
-    min_e->add_prim = 1;
-    i += 1;
-    struct v_node *temp = temp_dequeue (origin_que, to_B->to);
-    // struct v_node *temp = temp_dequeue (origin_que, to_B->to);
-    // free (temp);
-    temp_enqueue (prim_que, to_B->to);
-  }
+    prim_edges[i].from = near_pre_v[vnear];
+    prim_edges[i].to = vnear;
+    prim_edges[i].weight = min_dist;
+    dist_prim[vnear] = -1; // 프림에 추가됨
 
-  return prim_edge;
-}
+    for (j = 0; j < v; j++) {
+      // if (matrix[j][vnear] < dist_prim[j] && j != start && matrix[j][vnear] != 0) {
+      if (matrix[j][vnear] != 0 && matrix[j][vnear] < dist_prim[j] && j != start) {
 
-struct queue *init_queue () {
-  struct queue *que = (struct queue *) malloc (sizeof (struct queue));
-  que->front = NULL;
-  que->rear = NULL;
-  return que;
-}
-
-void enqueue (struct queue *q, int vertex) {
-  struct v_node *node = (struct v_node *) malloc (sizeof (struct v_node));
-  node->vertex = vertex;
-
-  if (q->front == NULL) {
-    q->front = node;
-  }
-
-  if (q->rear != NULL) {
-    q->rear->next = node;
-  }
-  q->rear = node;
-}
-
-void temp_enqueue (struct queue *q, int vertex) {
-  struct v_node *node = (struct v_node *) malloc (sizeof (struct v_node));
-  node->vertex = vertex;
-  node->next = NULL;
-
-  if (q->front == NULL) {
-    q->front = node;
-    node->pre = NULL;
-  } else {
-    q->rear->next = node;
-    node->pre = q->rear;
-  }
-  q->rear = node;
-}
-
-// void priority_enqueue (struct queue *q, int vertex) { }
-
-struct v_node *dequeue (struct queue *q) {
-  struct v_node *head = q->front;
-  if (q->front->next != NULL) {
-    q->front = q->front->next;
-  } else {
-    q->front = NULL;
-    q->rear = NULL;
-  }
-  return head;
-}
-
-struct v_node *temp_dequeue (struct queue *q, int vertex) {
-  printf ("함수들어와쬬어 뿌우~~~\n");
-  struct v_node *cur = q->front;
-  while (cur != NULL) {
-    if (cur->vertex == vertex) {
-      // 머리일때, 끝일때, 중간일때 모두 아울러서
-      if (cur == q->front) {
-        printf ("11111111111\n");
-        cur->next->pre = q->front;
-        q->front = cur->next;
-      } else if (cur == q->rear) {
-        printf ("1122222222221\n");
-        cur->pre->next = NULL;
-        q->rear = cur->pre;
-      } else {
-        printf ("33333333331\n");
-        cur->pre->next = cur->next;
-        cur->next->pre = cur->pre;
+        near_pre_v[j] = vnear;
+        dist_prim[j] = matrix[j][vnear];
+        // dist_prim[j] = matrix[vnear][j];
+        // prim_edges[i]->from = j;
       }
-      return cur;
     }
-    cur = cur->next;
   }
-}
 
-int search_que_value (struct queue *que, int vertex) {
-  struct v_node *cur = que->front;
-  while (cur != NULL) {
-    if (cur->vertex == vertex) {
-      return 1; // 해당 정점이 큐에 있다
-    }
-    cur = cur->next;
-  }
-  return 0; // 해당 정점이 큐에 없다.
+  return prim_edges;
 }
 
 // 가중치가 있는 그래프를 위해 변경한 코드
