@@ -6,6 +6,7 @@
  * min heap 우선 순위 큐를 이용한 Prim Algorithm이 있지만
  * 수업시간에 쓴 별도의 pop이 필요하지 않은 방식으로.. (-1 표기)
  * Q : 그런데 이 방식은 행렬이랑 더 잘 맞나? 아닐텐데
+ * 수정해서 2017. 04. 05. 완료 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,13 +106,9 @@ struct e_node *prim_search (int **matrix, int v, int start) {
     dist_prim[vnear] = -1; // 프림에 추가됨
 
     for (j = 0; j < v; j++) {
-      // if (matrix[j][vnear] < dist_prim[j] && j != start && matrix[j][vnear] != 0) {
       if (matrix[j][vnear] != 0 && matrix[j][vnear] < dist_prim[j] && j != start) {
-
         near_pre_v[j] = vnear;
         dist_prim[j] = matrix[j][vnear];
-        // dist_prim[j] = matrix[vnear][j];
-        // prim_edges[i]->from = j;
       }
     }
   }

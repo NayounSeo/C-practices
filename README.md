@@ -26,7 +26,9 @@ Hanyang Univ. datastructure pdf
 extra study
 Introdunction to Algorithms (Thomas H. Cormen, ....) 3rd Edition
 
- 1. basic sorts - bubble, merge, heap
+
+ 1. basic sorts - bubble, merge, heap, quick
+ 2. graph - BFS, DFS (+ topological sort), MST prim
 
 # etc
 
