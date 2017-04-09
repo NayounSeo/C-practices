@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <memory.h>
+
+#define MAX_ARR 128
 
 struct stack {
   char *arr;
@@ -13,72 +16,98 @@ struct out_arr {
   int size;
 };
 
-void stdin_open (struct stack *s, struct out_arr *out);
-void stdin_close (struct stack *s, struct out_arr *out);
-void stdin_sharp (struct stack *s, struct out_arr *out);
+int stdin_open (struct stack *s, char *input, struct out_arr *out, int i);
+void stdin_sharp (struct stack *s,  struct out_arr *out);
+
 struct stack *create_stack(int arr_size);
 struct out_arr *create_out_arr (int arr_size);
 struct stack *make_empty_stack(struct stack *s);
 int is_empty (struct stack *s);
 void push (char x, struct stack *s);
+void memorize_input (char x, struct out_arr *out);
 char pop (struct stack *s);
 void delete_stack (struct stack *s);
 
 int main () {
-  char in = '.';
-  int arr_size = 128;
-  struct out_arr *out = create_out_arr (arr_size);
-  struct stack *s = create_stack (arr_size);
-  scanf ("%c", &in);
+  int arr_size = MAX_ARR;
+  char input[MAX_ARR] = {'\0', };
 
-  while (in != '!') {
-    fflush (stdin);
-    if (in == '(') {
-      puts("((((");
-      stdin_open (s, out);
-    } else if (in == ')') {
-      puts("))))");
-      stdin_close (s, out);
-    } else if (in == '#') {
-      puts("####");
-      stdin_sharp (s, out);
-    } else {
-      puts("elseelseelseelse");
-      out->arr[out->size] = in;
-      out->size += 1;
-      scanf ("%c", &in);
+  struct stack *s = create_stack (arr_size);
+  struct out_arr *out = create_out_arr (arr_size);
+
+  int i = 0;
+  while (1) {
+    fgets (input, arr_size, stdin);
+    while (input[0] != '!' || i < MAX_ARR) {
+      if (input[i] == '(') {
+        i = stdin_open (s, input, out, i);
+      } else if (input[i] == ')') {
+        // stdin_close (s, out);
+        // 솔직히 이건 짝이 안맞을 경우 + ㅋ하지만 이미 스택에 있는 애들은 살려야
+        char x = pop (s);
+        while (x != '\0') { // 스택의 내용을 출력 문자열로 이동시키고
+          memorize_input (x, out);
+          x = pop (s);
+        }
+        s->top = s->size; // 더이상 스택에 들어갈 수 없게
+        i += 1;
+
+      } else if (input[i] == '#') {
+        stdin_sharp (s, out);
+        break; // 안쪽 while 빠져나오기
+      } else {
+        push (input[i], s);
+        i += 1;
+      }
     }
+
+    i = 0; // 초기화를 위해
   }
 
   delete_stack (s);
   return 0;
 }
 
-void stdin_open (struct stack *s,  struct out_arr *out) {
+int stdin_open (struct stack *s, char *input, struct out_arr *out, int i) {
   printf ("\t\t\tstdin_open\n");
-  char x;
-  push ('(', s);
+  char x = '\0'; // while 안에 있으면 왜..?ㅜㅠ
+  char open = '(';
 
-  scanf("%c", &x);
-  while ((x != 41) || (x != 35)) {
-    printf ("x = %c, %d\n", x, x);
-    push (x, s);
-    scanf("%c", &x);
+  int opn_cnt = 1;
+  while (opn_cnt != 0) {
+    if (input[i] == '(') {
+      push (input[i], s);
+    }
+    i += 1;
+
+    while (input[i] != ')') {
+      if (input[i] == '(') {
+        opn_cnt += 1;
+      }
+      push (input[i], s);
+      i += 1;
+    }
+
+    // if (input[i] == ')') {
+    while (strncmp (&x, &open, 1) != 0) {
+      printf("문자열 비교 %d\n", strncmp (&x, &open, 1));
+      x = pop (s);
+      printf ("x : %c %d, input[i] : %c, i = %d\n", x, x, input[i], i);
+      memorize_input (x, out);
+    }
+    // i += 1;
+    // pop (s); // 남아있는 '('도 pop ()
+    opn_cnt -= 1;
+    // }
   }
-  if (x == ')') { // ) 이 입력되서 push가 끝났다면
-    stdin_close (s, out);
-    // 이 다음?
-  } else if (x == '#') {
-    stdin_sharp (s, out);
-    // 이 다음?
-  }
+  return i;
 }
 
+/*
 void stdin_close (struct stack *s,  struct out_arr *out) {
   printf ("\t\t\tstdin_close\n");
   char x = pop (s);
   if (x == '\0') { // 스택이 비어있으면
-    // #을 제외한 문자들을 무시하도록 - push 할 수 없도록
     s->top = s->size;
     return;
   }
@@ -87,8 +116,8 @@ void stdin_close (struct stack *s,  struct out_arr *out) {
     out->size += 1;
     x = pop (s);
   }
-  // TODO : 다시 입력을 받을 수 있어야 한다. 
 }
+*/
 
 void stdin_sharp (struct stack *s,  struct out_arr *out) {
   printf ("\t\t\tstdin_sharp\n");
@@ -154,12 +183,21 @@ void push (char x, struct stack *s) {
   s->top += 1;
 }
 
+void memorize_input (char x, struct out_arr *out) {
+  if (out->size == MAX_ARR) {
+    return;
+  }
+  out->arr[out->size] = x;
+  out->size += 1;
+}
+
 char pop (struct stack *s) {
   printf ("\t\tpop\n");
   if (s->top == 0) {
     return '\0';
   }
   char x = s->arr[s->top - 1];
+  s->arr[s->top - 1] = '\0';
   s->top -= 1;
 
   return x;
