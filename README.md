@@ -1,7 +1,7 @@
 C practices 
 Nayoun Seo
 
-# DataStructure_yedarm
+# DataStructure_HY
 ESTsoft Futures Study, Data Structures
 Hanyang Univ. datastructure pdf
 
